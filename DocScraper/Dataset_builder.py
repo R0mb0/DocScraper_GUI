@@ -659,19 +659,14 @@ class DatasetBuilderApp(ctk.CTk):
         ui_age_val = self.combo_age.get()
         time_param = self.age_options_map.get(ui_age_val, None)
 
-        # Puliamo le keyword dagli spazi extra
         inc_cleaned = [kw.strip() for kw in re.split(r'[,\n]', include_raw) if kw.strip()]
         exc_cleaned = [kw.strip() for kw in re.split(r'[,\n]', exclude_raw) if kw.strip()]
         
-        # RIMOSSA l'aggiunta automatica di virgolette per le inclusioni,
-        # lasciamo che DuckDuckGo valuti le parole in modo naturale.
         inc_list = inc_cleaned 
         
-        # Gestione Esclusioni (collegare il meno correttamente e usare virgolette
-        # solo se ci sono spazi e l'utente non le ha già messe)
         exc_list = []
         for kw in exc_cleaned:
-            clean_kw = kw.lstrip('-').strip() # Rimuove meno inseriti per sbaglio dall'utente
+            clean_kw = kw.lstrip('-').strip() 
             if ' ' in clean_kw and not clean_kw.startswith('"'):
                 exc_list.append(f'-"{clean_kw}"')
             else:
@@ -679,7 +674,6 @@ class DatasetBuilderApp(ctk.CTk):
         
         exclusions_str = " " + " ".join(exc_list) if exc_list else ""
 
-        # Controllo per Regex "YYYY-YYYY" se non è un'opzione fissa
         date_query_append = ""
         if time_param is None and ui_age_val != self.t["age_any"]:
             match = re.match(r'(\d{4})\s*-\s*(\d{4})', ui_age_val)
@@ -689,12 +683,11 @@ class DatasetBuilderApp(ctk.CTk):
                     years = [str(y) for y in range(start_y, end_y + 1)]
                     date_query_append = " (" + " OR ".join(years) + ")"
             else:
-                date_query_append = f" {ui_age_val}" # Usa come stringa libera
+                date_query_append = f" {ui_age_val}" 
         
         downloaded_count = 0
         seen_urls = set()
 
-        # Fallback all'inglese (wt-wt)
         regions_to_try = [selected_region]
         if selected_region != "wt-wt": regions_to_try.append("wt-wt")
 
@@ -704,8 +697,8 @@ class DatasetBuilderApp(ctk.CTk):
             region_name = ui_lang_val if region == selected_region else self.t["lang_en"]
             self.log_message(self.t["log_phase"].format(region_name, region))
 
-            # Fase 1: AND
-            strict_query = " ".join(inc_list) + " filetype:pdf" + exclusions_str + date_query_append
+            # Fase 1: AND (Usiamo ext:pdf che è più rigoroso su DuckDuckGo)
+            strict_query = " ".join(inc_list) + " ext:pdf" + exclusions_str + date_query_append
             self.log_message(self.t["log_strict"].format(strict_query))
             downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning)
 
@@ -713,7 +706,7 @@ class DatasetBuilderApp(ctk.CTk):
 
             # Fase 2: OR
             if len(inc_list) > 1:
-                loose_query = "(" + " OR ".join(inc_list) + ") filetype:pdf" + exclusions_str + date_query_append
+                loose_query = "(" + " OR ".join(inc_list) + ") ext:pdf" + exclusions_str + date_query_append
                 self.log_message(self.t["log_loose"].format(loose_query))
                 downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning)
 
@@ -733,18 +726,26 @@ class DatasetBuilderApp(ctk.CTk):
                     if self.stop_event.is_set() or current_count >= max_files: break
                         
                     url = result.get('href')
-                    if not url or not url.lower().endswith('.pdf') or url in seen_urls: continue 
+                    
+                    # === ECCO LA FIX PRINCIPALE ===
+                    # Abbiamo rimosso url.lower().endswith('.pdf')
+                    # I siti di ricerca hanno url come "sito.com/pdf?download=true" che venivano scartati!
+                    if not url or url in seen_urls: continue 
 
                     seen_urls.add(url)
                     self.log_message(self.t["log_found_url"].format(url))
                     
                     parsed_url = urllib.parse.urlparse(url)
                     filename = os.path.basename(parsed_url.path)
-                    if not filename.endswith('.pdf'): filename = f"doc_{current_count}.pdf"
+                    
+                    # Genera un nome file sicuro se l'URL non finisce in modo "pulito"
+                    if not filename.lower().endswith('.pdf'): 
+                        filename = f"documento_trovato_{current_count + 1}.pdf"
                     
                     safe_filename = re.sub(r'[\\/*?:"<>|]', "", filename)
                     file_path = os.path.join(output_dir, safe_filename)
 
+                    # Evita sovrascritture se due file hanno lo stesso nome
                     if os.path.exists(file_path):
                         base, ext = os.path.splitext(safe_filename)
                         safe_filename = f"{base}_{int(time.time())}{ext}"
@@ -823,7 +824,6 @@ if __name__ == "__main__":
     ctk.set_appearance_mode("System")  
     ctk.set_default_color_theme("blue")  
     
-    # Per Windows: Imposta l'ambiente per forzare UTF-8 nei log del terminale (opzionale)
     if sys.platform == "win32":
         os.system('chcp 65001 > nul')
 
