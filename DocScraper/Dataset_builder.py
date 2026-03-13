@@ -40,15 +40,21 @@ class DatasetBuilderApp(ctk.CTk):
 
         # Setup main window
         self.title("AI Dataset Builder Pro")
-        self.geometry("850x800") # Increased height slightly for bigger text boxes
-        self.minsize(700, 700)
+        self.geometry("850x800") 
+        self.minsize(500, 500) # Lowered to prevent UI locking on small screens
         
         # Apply placeholder icon
         self._set_app_icon()
 
-        # Configure Grid Layout (Responsive)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1) # Log text box will expand
+        # ======================================================================
+        # MASTER SCROLLABLE FRAME
+        # This prevents the UI from crushing when the window is resized/snapped
+        # ======================================================================
+        self.main_frame = ctk.CTkScrollableFrame(self)
+        self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Configure Grid Layout inside the scrollable frame
+        self.main_frame.grid_columnconfigure(0, weight=1)
 
         # State Variables
         self.is_running = False
@@ -72,8 +78,8 @@ class DatasetBuilderApp(ctk.CTk):
     def _build_ui(self):
         """Constructs the user interface."""
         # --- 1. SEARCH PARAMETERS FRAME ---
-        self.frame_params = ctk.CTkFrame(self, corner_radius=10)
-        self.frame_params.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
+        self.frame_params = ctk.CTkFrame(self.main_frame, corner_radius=10)
+        self.frame_params.grid(row=0, column=0, padx=10, pady=(10, 10), sticky="ew")
         self.frame_params.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(self.frame_params, text="Search Parameters", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="w")
@@ -101,8 +107,8 @@ class DatasetBuilderApp(ctk.CTk):
         self.combo_max_files.set("20")
 
         # --- 2. OUTPUT DIRECTORY FRAME ---
-        self.frame_dir = ctk.CTkFrame(self, corner_radius=10)
-        self.frame_dir.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+        self.frame_dir = ctk.CTkFrame(self.main_frame, corner_radius=10)
+        self.frame_dir.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.frame_dir.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(self.frame_dir, text="Output Directory", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, columnspan=3, padx=10, pady=(10, 5), sticky="w")
@@ -114,16 +120,16 @@ class DatasetBuilderApp(ctk.CTk):
         self.btn_browse.grid(row=1, column=2, padx=(5, 10), pady=(5, 10), sticky="e")
 
         # --- 3. REFINEMENT & OPTIONS FRAME ---
-        self.frame_options = ctk.CTkFrame(self, corner_radius=10)
-        self.frame_options.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.frame_options = ctk.CTkFrame(self.main_frame, corner_radius=10)
+        self.frame_options.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
         
         self.checkbox_clean = ctk.CTkCheckBox(self.frame_options, text="Enable Data Cleaning (Extract and clean text from PDFs)")
         self.checkbox_clean.grid(row=0, column=0, padx=20, pady=15, sticky="w")
         self.checkbox_clean.select() # Enabled by default
 
         # --- 4. CONTROLS FRAME ---
-        self.frame_controls = ctk.CTkFrame(self, fg_color="transparent")
-        self.frame_controls.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
+        self.frame_controls = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.frame_controls.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         self.frame_controls.grid_columnconfigure((0, 1), weight=1)
 
         self.btn_start = ctk.CTkButton(self.frame_controls, text="START PROCESSING", fg_color="green", hover_color="darkgreen", height=40, font=ctk.CTkFont(weight="bold"), command=self.start_process)
@@ -133,8 +139,9 @@ class DatasetBuilderApp(ctk.CTk):
         self.btn_stop.grid(row=0, column=1, padx=(10, 0), pady=0, sticky="ew")
 
         # --- 5. LOG TERMINAL ---
-        self.textbox_log = ctk.CTkTextbox(self, state="disabled", wrap="word", font=ctk.CTkFont(family="Consolas", size=12))
-        self.textbox_log.grid(row=4, column=0, padx=20, pady=(10, 20), sticky="nsew")
+        # Height is fixed to 300 so it doesn't get crushed when the window gets smaller
+        self.textbox_log = ctk.CTkTextbox(self.main_frame, state="disabled", wrap="word", font=ctk.CTkFont(family="Consolas", size=12), height=300)
+        self.textbox_log.grid(row=4, column=0, padx=10, pady=(10, 20), sticky="nsew")
 
     # ==============================================================================
     # UI INTERACTIONS & HELPER METHODS
