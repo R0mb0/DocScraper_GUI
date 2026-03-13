@@ -6,6 +6,7 @@ import locale
 import threading
 import queue
 import time
+import random  # <--- AGGIUNTO QUESTO
 import re
 import urllib.parse
 import base64
@@ -20,12 +21,13 @@ try:
     from duckduckgo_search import DDGS
     from googlesearch import search # AGGIUNTA LIBRERIA GOOGLE
     import fitz  # PyMuPDF
+    import docx
 except ImportError as e:
     print("="*60)
     print("MISSING DEPENDENCIES / DIPENDENZE MANCANTI!")
     print(f"Error: {e}")
     print("\nPlease install required packages using / Installa i pacchetti richiesti con:")
-    print("pip install customtkinter requests duckduckgo-search googlesearch-python PyMuPDF")
+    print("pip install customtkinter requests duckduckgo-search googlesearch-python PyMuPDF docx")
     print("="*60)
     sys.exit(1)
 
@@ -677,27 +679,34 @@ class DatasetBuilderApp(ctk.CTk):
             region_name = ui_lang_val if region == selected_region else self.t["lang_en"]
             self.log_message(self.t["log_phase"].format(region_name, region))
 
-            strict_query = " ".join(inc_list) + " filetype:pdf" + exclusions_str + date_query_append
-            self.log_message(self.t["log_strict"].format(strict_query))
-            downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning)
+            # CICLO SUI FORMATI: Prima PDF, se non basta DOCX
+            for target_ext in ["pdf", "docx"]:
+                if self.stop_event.is_set() or downloaded_count >= max_files: break
+                
+                self.log_message(f"=== Searching for format: {target_ext.upper()} ===")
 
-            if self.stop_event.is_set() or downloaded_count >= max_files: break
+                strict_query = " ".join(inc_list) + f" filetype:{target_ext}" + exclusions_str + date_query_append
+                self.log_message(self.t["log_strict"].format(strict_query))
+                downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext)
 
-            if len(inc_list) > 1:
-                loose_query = "(" + " OR ".join(inc_list) + ") filetype:pdf" + exclusions_str + date_query_append
-                self.log_message(self.t["log_loose"].format(loose_query))
-                downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning)
+                if self.stop_event.is_set() or downloaded_count >= max_files: break
+
+                if len(inc_list) > 1:
+                    loose_query = "(" + " OR ".join(inc_list) + f") filetype:{target_ext}" + exclusions_str + date_query_append
+                    self.log_message(self.t["log_loose"].format(loose_query))
+                    downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext)
 
         if downloaded_count < max_files and not self.stop_event.is_set():
             self.log_message(self.t["log_summary"].format(downloaded_count, max_files))
 
-    def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning):
+    def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning, target_ext):
         # --- PHASE 1: DUCKDUCKGO ---
         self.log_message(f"   -> [DDG] Searching on DuckDuckGo...")
         try:
             with DDGS() as ddgs:
-                # Chiediamo qualche risultato in più a DDG per compensare i falsi positivi
-                ddg_results = ddgs.text(query, timelimit=time_param, region=region, max_results=max_files*2)
+                # MODIFICA CRITICA: backend="html" forza DDG a comportarsi come un VERO browser.
+                # Evita totalmente i link cinesi spazzatura e gestisce perfettamente le esclusioni (-).
+                ddg_results = list(ddgs.text(query, timelimit=time_param, region=region, max_results=max_files*2, backend="html"))
                 
                 if ddg_results:
                     for result in ddg_results:
@@ -709,36 +718,51 @@ class DatasetBuilderApp(ctk.CTk):
                         seen_urls.add(url)
                         self.log_message(self.t["log_found_url"].format(url))
                         
-                        downloaded_path = self._download_file(url, output_dir, current_count)
+                        downloaded_path = self._download_file(url, output_dir, current_count, target_ext)
                         if downloaded_path:
                             current_count += 1
                             if enable_cleaning:
                                 self.download_queue.put(downloaded_path)
+                                
+                        # --- SICUREZZA ANTI-BAN DDG ---
+                        sleep_time = random.uniform(3.0, 6.0)
+                        self.stop_event.wait(sleep_time)
+
         except Exception as e:
             self.log_message(f"   -> [DDG ERROR] {str(e)}")
 
         # --- PHASE 2: GOOGLE SEARCH (FALLBACK/INTEGRATION) ---
-        # Se non abbiamo raggiunto il target di file e l'utente non ha stoppato, usiamo Google
         if current_count < max_files and not self.stop_event.is_set():
             missing_files = max_files - current_count
             self.log_message(f"   -> [GOOGLE] Target not reached. Searching on Google to fill the gap ({missing_files} missing files)...")
             try:
-                # Parametri aggiornati per le ultime versioni di googlesearch-python
-                # num_results definisce quanti link estrarre, sleep_interval è la pausa anti-blocco
-                google_results = search(query, num_results=max_files*2, sleep_interval=2)
+                # L'uso di advanced=True a volte estrae risultati in un formato che ignora il popup dei Cookie
+                google_results = list(search(query, num_results=max_files*2, sleep_interval=10, lang="en", advanced=True))
                 
-                for url in google_results:
+                if not google_results:
+                    self.log_message("   -> [WARNING] Google returned 0 results. (Probabile blocco della pagina Cookie Consent Europea)")
+
+                for result in google_results:
                     if self.stop_event.is_set() or current_count >= max_files: break
-                    if not url or url in seen_urls: continue
+                    
+                    # Con advanced=True, result è un oggetto strutturato. Ne estraiamo l'URL.
+                    url = getattr(result, 'url', result) if hasattr(result, 'url') else result
+                    
+                    if not isinstance(url, str) or not url or url in seen_urls: continue
 
                     seen_urls.add(url)
                     self.log_message(self.t["log_found_url"].format(url))
                     
-                    downloaded_path = self._download_file(url, output_dir, current_count)
+                    downloaded_path = self._download_file(url, output_dir, current_count, target_ext)
                     if downloaded_path:
                         current_count += 1
                         if enable_cleaning:
                             self.download_queue.put(downloaded_path)
+
+                    # --- SICUREZZA ANTI-BAN SERVER FINALI ---
+                    sleep_time = random.uniform(4.0, 8.0)
+                    self.stop_event.wait(sleep_time)
+
             except Exception as e:
                 self.log_message(f"   -> [GOOGLE ERROR] {str(e)}")
 
@@ -748,11 +772,10 @@ class DatasetBuilderApp(ctk.CTk):
             
         return current_count
 
-    def _download_file(self, url, output_dir, current_count):
+    def _download_file(self, url, output_dir, current_count, target_ext):
         """Scarica il file verificando che non sia una pagina web mascherata e estraendo il vero nome."""
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         try:
-            # stream=True permette di leggere gli header prima di scaricare il corpo del file
             response = requests.get(url, headers=headers, stream=True, timeout=15)
             response.raise_for_status()
 
@@ -766,7 +789,6 @@ class DatasetBuilderApp(ctk.CTk):
             filename = ""
             cd = response.headers.get('Content-Disposition', '')
             if 'filename=' in cd:
-                # Estrae il nome dal server (es: attachment; filename="report.pdf")
                 matches = re.findall(r'filename="?([^"]+)"?', cd)
                 if matches:
                     filename = matches[0]
@@ -776,12 +798,12 @@ class DatasetBuilderApp(ctk.CTk):
                 parsed_url = urllib.parse.urlparse(url)
                 filename = os.path.basename(parsed_url.path)
 
-            # 4. Fallback se ancora non assomiglia a un PDF
-            if not filename.lower().endswith('.pdf'):
+            # 4. Fallback se ancora non assomiglia all'estensione cercata
+            if not filename.lower().endswith(f'.{target_ext}'):
                 if filename:
-                    filename = f"{filename}.pdf" # es. 1234.5678 -> 1234.5678.pdf
+                    filename = f"{filename}.{target_ext}" # es. 1234 -> 1234.docx
                 else:
-                    filename = f"dataset_doc_{current_count + 1}.pdf"
+                    filename = f"dataset_doc_{current_count + 1}.{target_ext}"
             
             # Pulisce il nome file da caratteri non validi
             safe_filename = re.sub(r'[\\/*?:"<>|]', "", filename)
@@ -830,12 +852,24 @@ class DatasetBuilderApp(ctk.CTk):
             self.log_message(self.t["log_extracting"].format(filename))
 
             try:
-                doc = fitz.open(pdf_path)
                 full_text = ""
-                for page_num in range(len(doc)):
-                    if self.stop_event.is_set(): break
-                    full_text += doc.load_page(page_num).get_text() + "\n"
-                doc.close()
+                ext = os.path.splitext(filename)[1].lower() # Prende l'estensione (.pdf o .docx)
+
+                if ext == '.pdf':
+                    doc = fitz.open(pdf_path) # <-- Assicurati che qui ci sia la tua variabile corretta (es. pdf_path o downloaded_path)
+                    for page_num in range(len(doc)):
+                        if self.stop_event.is_set(): break
+                        full_text += doc.load_page(page_num).get_text() + "\n"
+                    doc.close()
+                    
+                elif ext == '.docx':
+                    doc = docx.Document(pdf_path) # <-- Stessa cosa qui
+                    for para in doc.paragraphs:
+                        if self.stop_event.is_set(): break
+                        full_text += para.text + "\n"
+                else:
+                    self.log_message(f"   -> [WARNING] Unsupported format for cleaning: {ext}")
+                    continue
 
                 if self.stop_event.is_set(): break
 
