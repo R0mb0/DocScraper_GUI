@@ -195,8 +195,8 @@ TRANSLATIONS = {
         "log_start": "=== INICIANDO CONSTRUCTOR DE DATASETS ===",
         "log_clean_dir": "Carpeta de datos limpios creada: {}",
         "log_stop_req": "[INFO] Parada solicitada. Esperando...",
-        "log_stopped": "=== PROCESO DETENIDO POR EL USUARIO ===",
-        "log_completed": "=== PROCESO COMPLETADO CON ÉXITO ===",
+        "log_stopped": "=== PROCESSO DETENIDO POR EL USUARIO ===",
+        "log_completed": "=== PROCESSO COMPLETADO CON ÉXITO ===",
         "log_phase": "\n[BÚSQUEDA] Iniciando fase en idioma: {} ({})",
         "log_strict": "  -> Intento 'Estricto' (AND): {}",
         "log_loose": "  -> Intento 'Amplio' (OR): {}",
@@ -659,13 +659,23 @@ class DatasetBuilderApp(ctk.CTk):
         ui_age_val = self.combo_age.get()
         time_param = self.age_options_map.get(ui_age_val, None)
 
-        # BUG FIX: Puliamo prima le keyword dagli spazi extra
+        # Puliamo le keyword dagli spazi extra
         inc_cleaned = [kw.strip() for kw in re.split(r'[,\n]', include_raw) if kw.strip()]
         exc_cleaned = [kw.strip() for kw in re.split(r'[,\n]', exclude_raw) if kw.strip()]
         
-        # Applichiamo le virgolette solo se c'è uno spazio *all'interno* del termine
-        inc_list = [f'"{kw}"' if ' ' in kw else kw for kw in inc_cleaned]
-        exc_list = [f'-"{kw}"' if ' ' in kw else f"-{kw}" for kw in exc_cleaned]
+        # RIMOSSA l'aggiunta automatica di virgolette per le inclusioni,
+        # lasciamo che DuckDuckGo valuti le parole in modo naturale.
+        inc_list = inc_cleaned 
+        
+        # Gestione Esclusioni (collegare il meno correttamente e usare virgolette
+        # solo se ci sono spazi e l'utente non le ha già messe)
+        exc_list = []
+        for kw in exc_cleaned:
+            clean_kw = kw.lstrip('-').strip() # Rimuove meno inseriti per sbaglio dall'utente
+            if ' ' in clean_kw and not clean_kw.startswith('"'):
+                exc_list.append(f'-"{clean_kw}"')
+            else:
+                exc_list.append(f"-{clean_kw}")
         
         exclusions_str = " " + " ".join(exc_list) if exc_list else ""
 
