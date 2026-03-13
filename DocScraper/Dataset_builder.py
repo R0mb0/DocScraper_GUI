@@ -29,7 +29,6 @@ import tempfile
 # ==============================================================================
 # PLACEHOLDER ICON (Base64 encoded 16x16 transparent/blank icon)
 # ==============================================================================
-# Replace this with your own .ico file when packaging if desired.
 ICON_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAAJUlEQVQ4T2NkoBAwUqifYdQAxqEwajoYRg1gHAqjpoNh+AAzEwMAJ6YBzXUuIycAAAAASUVORK5CYII='
 
 # ==============================================================================
@@ -41,8 +40,8 @@ class DatasetBuilderApp(ctk.CTk):
 
         # Setup main window
         self.title("AI Dataset Builder Pro")
-        self.geometry("850x700")
-        self.minsize(700, 600)
+        self.geometry("850x800") # Increased height slightly for bigger text boxes
+        self.minsize(700, 700)
         
         # Apply placeholder icon
         self._set_app_icon()
@@ -79,21 +78,27 @@ class DatasetBuilderApp(ctk.CTk):
 
         ctk.CTkLabel(self.frame_params, text="Search Parameters", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="w")
 
-        # Keywords to Include
-        ctk.CTkLabel(self.frame_params, text="Include Keywords:").grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.entry_include = ctk.CTkEntry(self.frame_params, placeholder_text="e.g., machine learning, neural networks")
-        self.entry_include.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
+        # Keywords to Include (Multi-line)
+        ctk.CTkLabel(self.frame_params, text="Include Keywords\n(comma or newline separated):", justify="left").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
+        self.textbox_include = ctk.CTkTextbox(self.frame_params, height=80)
+        self.textbox_include.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-        # Keywords to Exclude
-        ctk.CTkLabel(self.frame_params, text="Exclude Keywords:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.entry_exclude = ctk.CTkEntry(self.frame_params, placeholder_text="e.g., syllabus, assignment")
-        self.entry_exclude.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
+        # Keywords to Exclude (Multi-line)
+        ctk.CTkLabel(self.frame_params, text="Exclude Keywords\n(comma or newline separated):", justify="left").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
+        self.textbox_exclude = ctk.CTkTextbox(self.frame_params, height=80)
+        self.textbox_exclude.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-        # Max File Age
-        ctk.CTkLabel(self.frame_params, text="Max File Age:").grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
+        # Max File Age / Date Range
+        ctk.CTkLabel(self.frame_params, text="Max File Age / Date Range:\n(e.g., 'Past Year' or '2024-2026')", justify="left").grid(row=3, column=0, padx=10, pady=5, sticky="nw")
         self.combo_age = ctk.CTkComboBox(self.frame_params, values=["Any", "Past Day", "Past Week", "Past Month", "Past Year"])
-        self.combo_age.grid(row=3, column=1, padx=10, pady=(5, 10), sticky="w")
+        self.combo_age.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
         self.combo_age.set("Any")
+
+        # Max Files to Download
+        ctk.CTkLabel(self.frame_params, text="Max Files to Download:").grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
+        self.combo_max_files = ctk.CTkComboBox(self.frame_params, values=["10", "20", "50", "100", "200"])
+        self.combo_max_files.grid(row=4, column=1, padx=10, pady=(5, 10), sticky="ew")
+        self.combo_max_files.set("20")
 
         # --- 2. OUTPUT DIRECTORY FRAME ---
         self.frame_dir = ctk.CTkFrame(self, corner_radius=10)
@@ -153,9 +158,10 @@ class DatasetBuilderApp(ctk.CTk):
     def toggle_ui_state(self, running: bool):
         """Enables or disables UI elements based on running state."""
         state = "disabled" if running else "normal"
-        self.entry_include.configure(state=state)
-        self.entry_exclude.configure(state=state)
+        self.textbox_include.configure(state=state)
+        self.textbox_exclude.configure(state=state)
         self.combo_age.configure(state=state)
+        self.combo_max_files.configure(state=state)
         self.entry_out_dir.configure(state=state)
         self.btn_browse.configure(state=state)
         self.checkbox_clean.configure(state=state)
@@ -172,14 +178,26 @@ class DatasetBuilderApp(ctk.CTk):
     # ==============================================================================
     def start_process(self):
         """Validates inputs and starts the Producer and Consumer threads."""
-        include_kw = self.entry_include.get().strip()
+        include_kw = self.textbox_include.get("1.0", "end-1c").strip()
         out_dir = self.entry_out_dir.get().strip()
 
+        # Validate Include Keywords
         if not include_kw:
             self.log_message("[ERROR] 'Include Keywords' cannot be empty.")
             return
+            
+        # Validate Output Directory
         if not out_dir or not os.path.isdir(out_dir):
             self.log_message("[ERROR] Please select a valid Output Directory.")
+            return
+            
+        # Validate Max Files
+        try:
+            max_files = int(self.combo_max_files.get().strip())
+            if max_files <= 0:
+                raise ValueError
+        except ValueError:
+            self.log_message("[ERROR] 'Max Files to Download' must be a positive integer.")
             return
 
         self.is_running = True
@@ -206,7 +224,7 @@ class DatasetBuilderApp(ctk.CTk):
             self.consumer_thread.start()
 
         # Start Producer Thread (Search & Download)
-        self.producer_thread = threading.Thread(target=self._search_producer_worker, args=(out_dir, enable_cleaning), daemon=True)
+        self.producer_thread = threading.Thread(target=self._search_producer_worker, args=(out_dir, enable_cleaning, max_files), daemon=True)
         self.producer_thread.start()
 
         # Monitor thread to reset UI when done
@@ -238,38 +256,67 @@ class DatasetBuilderApp(ctk.CTk):
     # ==============================================================================
     # THREAD 1: PRODUCER (Search & Download)
     # ==============================================================================
-    def _search_producer_worker(self, output_dir, enable_cleaning):
+    def _search_producer_worker(self, output_dir, enable_cleaning, max_files):
         """Searches for PDFs using DuckDuckGo and downloads them."""
-        # 1. Build Query
-        include_kw = self.entry_include.get().strip()
-        exclude_kw = self.entry_exclude.get().strip()
-        age = self.combo_age.get()
+        # 1. Retrieve UI Inputs
+        include_kw = self.textbox_include.get("1.0", "end-1c").strip()
+        exclude_kw = self.textbox_exclude.get("1.0", "end-1c").strip()
+        age = self.combo_age.get().strip()
 
-        query = f"{include_kw} filetype:pdf"
+        # 2. Build Base Query
+        # Replace newlines with spaces for the search query
+        include_clean = " ".join(include_kw.split())
+        query = f"{include_clean} filetype:pdf"
+        
+        # 3. Add Exclusions
         if exclude_kw:
-            # Split exclude keywords by comma and prepend '-' to each
-            excludes = [f"-{kw.strip()}" for kw in exclude_kw.split(",") if kw.strip()]
+            # Split exclude keywords by comma or newline and prepend '-' to each
+            excludes = [f"-{kw.strip()}" for kw in re.split(r'[,\n]', exclude_kw) if kw.strip()]
             query += " " + " ".join(excludes)
 
+        # 4. Handle Date Ranges / Max Age
         time_param = None
+        date_query_append = ""
+        
         if age == "Past Day": time_param = 'd'
         elif age == "Past Week": time_param = 'w'
         elif age == "Past Month": time_param = 'm'
         elif age == "Past Year": time_param = 'y'
+        elif age != "Any":
+            # Smart parsing for ranges like "2024-2026"
+            match = re.match(r'(\d{4})\s*-\s*(\d{4})', age)
+            if match:
+                start_year = int(match.group(1))
+                end_year = int(match.group(2))
+                # Ensure start is less than or equal to end
+                if start_year <= end_year:
+                    years = [str(y) for y in range(start_year, end_year + 1)]
+                    # Appends (2024 OR 2025 OR 2026) to query
+                    date_query_append = " (" + " OR ".join(years) + ")"
+            else:
+                # If they typed a specific year like "2023", just append it
+                date_query_append = f" {age}"
+        
+        # Append date logic to query string if applicable
+        if date_query_append:
+            query += date_query_append
 
         self.log_message(f"[SEARCH] Querying DuckDuckGo: '{query}'")
+        self.log_message(f"[SEARCH] Target Max Files: {max_files}")
 
         try:
             # Use DuckDuckGo Search API
             with DDGS() as ddgs:
-                results = ddgs.text(query, timelimit=time_param, max_results=20) # Limit to 20 for safety/demo
+                results = ddgs.text(query, timelimit=time_param, max_results=max_files)
                 
                 if not results:
                     self.log_message("[SEARCH] No results found for the given criteria.")
                     return
 
+                download_count = 0
                 for idx, result in enumerate(results):
                     if self.stop_event.is_set(): break
+                    if download_count >= max_files: break
                     
                     url = result.get('href')
                     if not url or not url.lower().endswith('.pdf'):
@@ -290,9 +337,11 @@ class DatasetBuilderApp(ctk.CTk):
                     # Download File
                     success = self._download_file(url, file_path)
                     
-                    if success and enable_cleaning:
-                        # Push to queue for the consumer
-                        self.download_queue.put(file_path)
+                    if success:
+                        download_count += 1
+                        if enable_cleaning:
+                            # Push to queue for the consumer
+                            self.download_queue.put(file_path)
 
         except Exception as e:
             self.log_message(f"[ERROR] Search failed: {str(e)}")
@@ -360,9 +409,7 @@ class DatasetBuilderApp(ctk.CTk):
                 # Basic Data Cleaning
                 # 1. Remove excessive newlines
                 clean_text = re.sub(r'\n{3,}', '\n\n', full_text)
-                # 2. Remove non-printable characters (optional, keeping basic ASCII + standard unicode)
-                # clean_text = ''.join(char for char in clean_text if char.isprintable() or char in ['\n', '\t'])
-                # 3. Strip trailing whitespace
+                # 2. Strip trailing whitespace
                 clean_text = clean_text.strip()
 
                 if clean_text:
