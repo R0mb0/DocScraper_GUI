@@ -56,7 +56,7 @@ TRANSLATIONS = {
         "btn_start": "START PROCESSING",
         "btn_stop": "STOP",
         
-        # Combo boxes options (Display names)
+        # Combo boxes options
         "age_any": "Any Time",
         "age_day": "Past Day",
         "age_week": "Past Week",
@@ -88,6 +88,7 @@ TRANSLATIONS = {
         "log_loose": "  -> 'Loose' attempt (OR): {}",
         "log_no_res": "     No results found in this phase.",
         "log_found_url": "[PRODUCER] Found URL: {}",
+        "log_skip_html": "   -> [SKIPPED] URL points to a webpage (HTML), not a PDF.",
         "log_saved": "   -> Saved: {}",
         "log_dl_fail": "   -> [FAILED] Could not download {}",
         "log_extracting": "[CONSUMER] Extracting text from: {}...",
@@ -128,16 +129,16 @@ TRANSLATIONS = {
         "lang_fr": "Francese",
         "lang_de": "Tedesco",
 
-        "msg_saved": "[SISTEMA] Impostazioni salvate correttamente in: {}",
-        "msg_err_save": "[ERRORE] Impossibile salvare le impostazioni: {}",
+        "msg_saved": "[SISTEMA] Impostazioni salvate in: {}",
+        "msg_err_save": "[ERRORE] Impossibile salvare: {}",
         "msg_loaded": "[SISTEMA] Impostazioni caricate da: {}",
-        "msg_err_load": "[ERRORE] Impossibile caricare le impostazioni: {}",
-        "err_include_empty": "[ERRORE] 'Parole da Includere' non può essere vuoto.",
-        "err_dir_invalid": "[ERRORE] Seleziona una Cartella di Destinazione valida.",
-        "err_max_files": "[ERRORE] 'Numero Max File' deve essere un numero intero positivo.",
+        "msg_err_load": "[ERRORE] Impossibile caricare: {}",
+        "err_include_empty": "[ERRORE] 'Parole da Includere' richiesto.",
+        "err_dir_invalid": "[ERRORE] Cartella di Destinazione non valida.",
+        "err_max_files": "[ERRORE] 'Numero Max File' deve essere numerico.",
         "log_start": "=== AVVIO COSTRUZIONE DATASET ===",
         "log_clean_dir": "Cartella dati puliti creata: {}",
-        "log_stop_req": "[INFO] Arresto richiesto. Attesa completamento operazioni in corso...",
+        "log_stop_req": "[INFO] Arresto richiesto. Attesa completamento...",
         "log_stopped": "=== PROCESSO ARRESTATO DALL'UTENTE ===",
         "log_completed": "=== PROCESSO COMPLETATO CON SUCCESSO ===",
         "log_phase": "\n[RICERCA] Avvio Passaggio in lingua: {} ({})",
@@ -145,6 +146,7 @@ TRANSLATIONS = {
         "log_loose": "  -> Tentativo 'Allargato' (OR): {}",
         "log_no_res": "     Nessun risultato trovato in questa fase.",
         "log_found_url": "[PRODUTTORE] Trovato URL: {}",
+        "log_skip_html": "   -> [SALTATO] L'URL punta a una pagina web (HTML), non a un PDF.",
         "log_saved": "   -> Salvato: {}",
         "log_dl_fail": "   -> [FALLITO] Impossibile scaricare {}",
         "log_extracting": "[CONSUMATORE] Estrazione testo da: {}...",
@@ -152,7 +154,7 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [ATTENZIONE] Nessun testo rilevabile in: {}",
         "log_clean_fail": "   -> [ERRORE] Fallita pulizia per {}",
         "log_api_err": "[ERRORE] Errore API Ricerca: {}",
-        "log_summary": "\n[INFO] Ricerca conclusa. Trovati {}/{} documenti possibili."
+        "log_summary": "\n[INFO] Ricerca conclusa. Trovati {}/{} documenti."
     },
     "es": {
         "app_title": "Constructor de Datasets IA Pro",
@@ -202,6 +204,7 @@ TRANSLATIONS = {
         "log_loose": "  -> Intento 'Amplio' (OR): {}",
         "log_no_res": "     No se encontraron resultados.",
         "log_found_url": "[PRODUCTOR] URL encontrada: {}",
+        "log_skip_html": "   -> [SALTADO] La URL apunta a una página web (HTML), no a un PDF.",
         "log_saved": "   -> Guardado: {}",
         "log_dl_fail": "   -> [FALLO] No se pudo descargar {}",
         "log_extracting": "[CONSUMIDOR] Extrayendo texto de: {}...",
@@ -209,7 +212,7 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [ADVERTENCIA] No hay texto detectable en: {}",
         "log_clean_fail": "   -> [ERROR] Fallo limpieza de {}",
         "log_api_err": "[ERROR] Error de API: {}",
-        "log_summary": "\n[INFO] Búsqueda finalizada. {}/{} documentos posibles."
+        "log_summary": "\n[INFO] Búsqueda finalizada. {}/{} documentos."
     },
     "fr": {
         "app_title": "Créateur de Datasets IA Pro",
@@ -259,6 +262,7 @@ TRANSLATIONS = {
         "log_loose": "  -> Essai 'Large' (OR): {}",
         "log_no_res": "     Aucun résultat.",
         "log_found_url": "[PRODUCTEUR] URL trouvée: {}",
+        "log_skip_html": "   -> [IGNORÉ] L'URL pointe vers une page web (HTML), pas un PDF.",
         "log_saved": "   -> Sauvegardé: {}",
         "log_dl_fail": "   -> [ÉCHEC] Impossible de télécharger {}",
         "log_extracting": "[CONSOMMATEUR] Extraction texte: {}...",
@@ -316,6 +320,7 @@ TRANSLATIONS = {
         "log_loose": "  -> 'Lockerer' Versuch (OR): {}",
         "log_no_res": "     Keine Ergebnisse gefunden.",
         "log_found_url": "[PRODUCER] URL gefunden: {}",
+        "log_skip_html": "   -> [ÜBERSPRUNGEN] URL verweist auf eine Webseite (HTML), nicht auf eine PDF-Datei.",
         "log_saved": "   -> Gespeichert: {}",
         "log_dl_fail": "   -> [FEHLGESCHLAGEN] Download nicht möglich {}",
         "log_extracting": "[CONSUMER] Textextraktion: {}...",
@@ -334,11 +339,9 @@ class DatasetBuilderApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         
-        # 1. Rilevamento Lingua OS e Setup Dizionario
         self.os_lang_code = self._detect_os_language()
         self.t = TRANSLATIONS.get(self.os_lang_code, TRANSLATIONS["en"])
 
-        # Configurazione finestra principale
         self.title(self.t["app_title"])
         self.geometry("900x850") 
         self.minsize(500, 500)
@@ -346,17 +349,14 @@ class DatasetBuilderApp(ctk.CTk):
         self._set_app_icon()
         self._build_menu()
 
-        # Frame Scorrevole
         self.main_frame = ctk.CTkScrollableFrame(self)
         self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
-        # Variabili di Stato
         self.is_running = False
         self.stop_event = threading.Event()
         self.download_queue = queue.Queue(maxsize=100)
         
-        # Mappatura Interna delle Opzioni indipendentemente dalla lingua UI
         self.lang_options_map = {
             self.t["lang_en"]: "wt-wt",
             self.t["lang_it"]: "it-it",
@@ -376,22 +376,17 @@ class DatasetBuilderApp(ctk.CTk):
         self._build_ui()
 
     def _detect_os_language(self):
-        """Rileva la lingua del sistema operativo per impostare UI e default ricerca."""
         try:
-            # Tenta prima con la variabile d'ambiente (più comune su Linux/Mac)
             lang = os.environ.get('LANG', '').split('_')[0].lower()
             if not lang:
-                # Fallback Windows / Default Python
                 loc = locale.getdefaultlocale()[0]
                 if loc:
                     lang = loc.split('_')[0].lower()
-            
-            supported = ['en', 'it', 'es', 'fr', 'de']
-            if lang in supported:
+            if lang in ['en', 'it', 'es', 'fr', 'de']:
                 return lang
         except Exception:
             pass
-        return 'en' # Fallback sicuro
+        return 'en'
 
     def _set_app_icon(self):
         try:
@@ -421,34 +416,26 @@ class DatasetBuilderApp(ctk.CTk):
 
         ctk.CTkLabel(self.frame_params, text=self.t["title_search_params"], font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="w")
 
-        # Includi
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_include"], justify="left").grid(row=1, column=0, padx=10, pady=5, sticky="nw")
         self.textbox_include = ctk.CTkTextbox(self.frame_params, height=80)
         self.textbox_include.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
         self.textbox_include._textbox.configure(undo=True, autoseparators=True, maxundo=-1)
 
-        # Escludi
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_exclude"], justify="left").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
         self.textbox_exclude = ctk.CTkTextbox(self.frame_params, height=80)
         self.textbox_exclude.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
         self.textbox_exclude._textbox.configure(undo=True, autoseparators=True, maxundo=-1)
 
-        # Lingua
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_lang"]).grid(row=3, column=0, padx=10, pady=5, sticky="w")
         self.combo_lang = ctk.CTkComboBox(self.frame_params, values=list(self.lang_options_map.keys()))
         self.combo_lang.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
-        
-        # Pre-seleziona la lingua nativa in base all'OS
-        default_lang_str = self.t.get(f"lang_{self.os_lang_code}", self.t["lang_en"])
-        self.combo_lang.set(default_lang_str)
+        self.combo_lang.set(self.t.get(f"lang_{self.os_lang_code}", self.t["lang_en"]))
 
-        # Età
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_age"], justify="left").grid(row=4, column=0, padx=10, pady=5, sticky="nw")
         self.combo_age = ctk.CTkComboBox(self.frame_params, values=list(self.age_options_map.keys()))
         self.combo_age.grid(row=4, column=1, padx=10, pady=10, sticky="ew")
         self.combo_age.set(self.t["age_any"])
 
-        # Max File
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_max_files"]).grid(row=5, column=0, padx=10, pady=(5, 10), sticky="w")
         self.combo_max_files = ctk.CTkComboBox(self.frame_params, values=["10", "20", "50", "100", "200", "500"])
         self.combo_max_files.grid(row=5, column=1, padx=10, pady=(5, 10), sticky="ew")
@@ -494,13 +481,9 @@ class DatasetBuilderApp(ctk.CTk):
     # SALVATAGGIO / CARICAMENTO
     # ==============================================================================
     def save_settings(self):
-        file_path = ctk.filedialog.asksaveasfilename(
-            defaultextension=".json",
-            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")],
-        )
+        file_path = ctk.filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
         if not file_path: return
 
-        # Salviamo i valori tradotti
         settings = {
             "include_kw": self.textbox_include.get("1.0", "end-1c"),
             "exclude_kw": self.textbox_exclude.get("1.0", "end-1c"),
@@ -519,9 +502,7 @@ class DatasetBuilderApp(ctk.CTk):
             self.log_message(self.t["msg_err_save"].format(e))
 
     def load_settings(self):
-        file_path = ctk.filedialog.askopenfilename(
-            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
-        )
+        file_path = ctk.filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
         if not file_path: return
 
         try:
@@ -534,7 +515,6 @@ class DatasetBuilderApp(ctk.CTk):
             self.textbox_exclude.delete("1.0", "end")
             self.textbox_exclude.insert("1.0", settings.get("exclude_kw", ""))
             
-            # Gestione sicura dei combobox
             lang_val = settings.get("language", self.combo_lang.get())
             if lang_val in self.lang_options_map: self.combo_lang.set(lang_val)
             
@@ -652,7 +632,6 @@ class DatasetBuilderApp(ctk.CTk):
         include_raw = self.textbox_include.get("1.0", "end-1c").strip()
         exclude_raw = self.textbox_exclude.get("1.0", "end-1c").strip()
         
-        # Mappatura Interna
         ui_lang_val = self.combo_lang.get()
         selected_region = self.lang_options_map.get(ui_lang_val, "wt-wt")
         
@@ -697,14 +676,12 @@ class DatasetBuilderApp(ctk.CTk):
             region_name = ui_lang_val if region == selected_region else self.t["lang_en"]
             self.log_message(self.t["log_phase"].format(region_name, region))
 
-            # Fase 1: AND (Usiamo ext:pdf che è più rigoroso su DuckDuckGo)
             strict_query = " ".join(inc_list) + " ext:pdf" + exclusions_str + date_query_append
             self.log_message(self.t["log_strict"].format(strict_query))
             downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning)
 
             if self.stop_event.is_set() or downloaded_count >= max_files: break
 
-            # Fase 2: OR
             if len(inc_list) > 1:
                 loose_query = "(" + " OR ".join(inc_list) + ") ext:pdf" + exclusions_str + date_query_append
                 self.log_message(self.t["log_loose"].format(loose_query))
@@ -726,55 +703,83 @@ class DatasetBuilderApp(ctk.CTk):
                     if self.stop_event.is_set() or current_count >= max_files: break
                         
                     url = result.get('href')
-                    
-                    # === ECCO LA FIX PRINCIPALE ===
-                    # Abbiamo rimosso url.lower().endswith('.pdf')
-                    # I siti di ricerca hanno url come "sito.com/pdf?download=true" che venivano scartati!
                     if not url or url in seen_urls: continue 
 
                     seen_urls.add(url)
                     self.log_message(self.t["log_found_url"].format(url))
                     
-                    parsed_url = urllib.parse.urlparse(url)
-                    filename = os.path.basename(parsed_url.path)
-                    
-                    # Genera un nome file sicuro se l'URL non finisce in modo "pulito"
-                    if not filename.lower().endswith('.pdf'): 
-                        filename = f"documento_trovato_{current_count + 1}.pdf"
-                    
-                    safe_filename = re.sub(r'[\\/*?:"<>|]', "", filename)
-                    file_path = os.path.join(output_dir, safe_filename)
-
-                    # Evita sovrascritture se due file hanno lo stesso nome
-                    if os.path.exists(file_path):
-                        base, ext = os.path.splitext(safe_filename)
-                        safe_filename = f"{base}_{int(time.time())}{ext}"
-                        file_path = os.path.join(output_dir, safe_filename)
-
-                    if self._download_file(url, file_path):
+                    # Usa il nuovo sistema di download "intelligente"
+                    downloaded_path = self._download_file(url, output_dir, current_count)
+                    if downloaded_path:
                         current_count += 1
                         if enable_cleaning:
-                            self.download_queue.put(file_path)
+                            self.download_queue.put(downloaded_path)
 
         except Exception as e:
             self.log_message(self.t["log_api_err"].format(e))
             
         return current_count
 
-    def _download_file(self, url, dest_path):
+    def _download_file(self, url, output_dir, current_count):
+        """Scarica il file verificando che non sia una pagina web mascherata e estraendo il vero nome."""
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         try:
+            # stream=True permette di leggere gli header prima di scaricare il corpo del file
             response = requests.get(url, headers=headers, stream=True, timeout=15)
             response.raise_for_status()
-            with open(dest_path, 'wb') as f:
+
+            # 1. Verifica che non sia una pagina web (HTML)
+            content_type = response.headers.get('Content-Type', '').lower()
+            if 'text/html' in content_type:
+                self.log_message(self.t["log_skip_html"])
+                return None
+
+            # 2. Cerca di recuperare il nome file originale
+            filename = ""
+            cd = response.headers.get('Content-Disposition', '')
+            if 'filename=' in cd:
+                # Estrae il nome dal server (es: attachment; filename="report.pdf")
+                matches = re.findall(r'filename="?([^"]+)"?', cd)
+                if matches:
+                    filename = matches[0]
+
+            # 3. Se non c'è negli header, lo prende dall'URL
+            if not filename:
+                parsed_url = urllib.parse.urlparse(url)
+                filename = os.path.basename(parsed_url.path)
+
+            # 4. Fallback se ancora non assomiglia a un PDF
+            if not filename.lower().endswith('.pdf'):
+                if filename:
+                    filename = f"{filename}.pdf" # es. 1234.5678 -> 1234.5678.pdf
+                else:
+                    filename = f"dataset_doc_{current_count + 1}.pdf"
+            
+            # Pulisce il nome file da caratteri non validi
+            safe_filename = re.sub(r'[\\/*?:"<>|]', "", filename)
+            file_path = os.path.join(output_dir, safe_filename)
+
+            # Evita sovrascritture di file omonimi
+            if os.path.exists(file_path):
+                base, ext = os.path.splitext(safe_filename)
+                safe_filename = f"{base}_{int(time.time())}{ext}"
+                file_path = os.path.join(output_dir, safe_filename)
+
+            # 5. Salva fisicamente il file sul disco
+            with open(file_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    if self.stop_event.is_set(): return False 
+                    if self.stop_event.is_set(): return None
                     if chunk: f.write(chunk)
-            self.log_message(self.t["log_saved"].format(os.path.basename(dest_path)))
-            return True
+            
+            self.log_message(self.t["log_saved"].format(safe_filename))
+            return file_path
+
         except requests.exceptions.RequestException:
             self.log_message(self.t["log_dl_fail"].format(url))
-            return False
+            return None
+        except Exception as e:
+            self.log_message(f"   -> [ERROR] {str(e)}")
+            return None
 
     # ==============================================================================
     # THREAD CONSUMATORE
