@@ -98,7 +98,17 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [WARNING] No detectable text in: {}",
         "log_clean_fail": "   -> [ERROR] Cleaning failed for {}",
         "log_api_err": "[ERROR] Search API Error: {}",
-        "log_summary": "\n[INFO] Search finished. Found {}/{} possible documents."
+        "log_summary": "\n[INFO] Search finished. Found {}/{} possible documents.",
+        # --- NUOVE TRADUZIONI ---
+        "lbl_api_key": "Brave API Key:",
+        "log_format": "=== Searching for format: {} ===",
+        "log_ddg_start": "   -> [DDG] Searching on DuckDuckGo...",
+        "log_ddg_err": "   -> [DDG ERROR] {}",
+        "log_brave_start": "   -> [BRAVE] Target not reached. Using Brave Search API ({} missing)...",
+        "log_brave_missing": "   -> [WARNING] Brave API Key is missing! Skipping Brave phase.",
+        "log_brave_0": "   -> [BRAVE] 0 results returned by API.",
+        "log_brave_err": "   -> [BRAVE ERROR] {}",
+        "log_unsupported": "   -> [WARNING] Unsupported format for cleaning: {}"
     },
     "it": {
         "app_title": "Costruttore Dataset AI Pro",
@@ -156,7 +166,17 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [ATTENZIONE] Nessun testo rilevabile in: {}",
         "log_clean_fail": "   -> [ERRORE] Fallita pulizia per {}",
         "log_api_err": "[ERRORE] Errore API Ricerca: {}",
-        "log_summary": "\n[INFO] Ricerca conclusa. Trovati {}/{} documenti."
+        "log_summary": "\n[INFO] Ricerca conclusa. Trovati {}/{} documenti.",
+        # --- NUOVE TRADUZIONI ---
+        "lbl_api_key": "Chiave API Brave:",
+        "log_format": "=== Ricerca formato: {} ===",
+        "log_ddg_start": "   -> [DDG] Cerco su DuckDuckGo...",
+        "log_ddg_err": "   -> [ERRORE DDG] {}",
+        "log_brave_start": "   -> [BRAVE] Target non raggiunto. Uso Brave Search API (mancano {} file)...",
+        "log_brave_missing": "   -> [ATTENZIONE] Chiave API Brave mancante! Salto la fase Brave.",
+        "log_brave_0": "   -> [BRAVE] L'API ha restituito 0 risultati.",
+        "log_brave_err": "   -> [ERRORE BRAVE] {}",
+        "log_unsupported": "   -> [ATTENZIONE] Formato non supportato per la pulizia: {}"
     },
     "es": {
         "app_title": "Constructor de Datasets IA Pro",
@@ -214,7 +234,17 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [ADVERTENCIA] No hay texto detectable en: {}",
         "log_clean_fail": "   -> [ERROR] Fallo limpieza de {}",
         "log_api_err": "[ERROR] Error de API: {}",
-        "log_summary": "\n[INFO] Búsqueda finalizada. {}/{} documentos."
+        "log_summary": "\n[INFO] Búsqueda finalizada. {}/{} documentos.",
+        # --- NUOVE TRADUZIONI ---
+        "lbl_api_key": "Clave API de Brave:",
+        "log_format": "=== Buscando formato: {} ===",
+        "log_ddg_start": "   -> [DDG] Buscando en DuckDuckGo...",
+        "log_ddg_err": "   -> [ERROR DDG] {}",
+        "log_brave_start": "   -> [BRAVE] Objetivo no alcanzado. Usando Brave Search API (faltan {})...",
+        "log_brave_missing": "   -> [ADVERTENCIA] ¡Falta la clave API de Brave! Saltando fase Brave.",
+        "log_brave_0": "   -> [BRAVE] La API devolvió 0 resultados.",
+        "log_brave_err": "   -> [ERROR BRAVE] {}",
+        "log_unsupported": "   -> [ADVERTENCIA] Formato no soportado para limpieza: {}"
     },
     "fr": {
         "app_title": "Créateur de Datasets IA Pro",
@@ -272,7 +302,17 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [ATTENTION] Aucun texte dans: {}",
         "log_clean_fail": "   -> [ERREUR] Échec nettoyage pour {}",
         "log_api_err": "[ERREUR] Erreur API: {}",
-        "log_summary": "\n[INFO] Recherche terminée. {}/{} documents."
+        "log_summary": "\n[INFO] Recherche terminée. {}/{} documents.",
+        # --- NUOVE TRADUZIONI ---
+        "lbl_api_key": "Clé API Brave:",
+        "log_format": "=== Recherche du format: {} ===",
+        "log_ddg_start": "   -> [DDG] Recherche sur DuckDuckGo...",
+        "log_ddg_err": "   -> [ERREUR DDG] {}",
+        "log_brave_start": "   -> [BRAVE] Cible non atteinte. Utilisation de Brave Search API ({} manquants)...",
+        "log_brave_missing": "   -> [ATTENTION] Clé API Brave manquante ! Phase Brave ignorée.",
+        "log_brave_0": "   -> [BRAVE] L'API a renvoyé 0 résultat.",
+        "log_brave_err": "   -> [ERREUR BRAVE] {}",
+        "log_unsupported": "   -> [ATTENTION] Format non pris en charge pour le nettoyage : {}"
     },
     "de": {
         "app_title": "KI Dataset Builder Pro",
@@ -330,7 +370,17 @@ TRANSLATIONS = {
         "log_no_txt": "   -> [WARNUNG] Kein Text in: {}",
         "log_clean_fail": "   -> [FEHLER] Bereinigung fehlgeschlagen für {}",
         "log_api_err": "[FEHLER] Such-API-Fehler: {}",
-        "log_summary": "\n[INFO] Suche beendet. {}/{} Dokumente."
+        "log_summary": "\n[INFO] Suche beendet. {}/{} Dokumente.",
+        # --- NUOVE TRADUZIONI ---
+        "lbl_api_key": "Brave API-Schlüssel:",
+        "log_format": "=== Suche nach Format: {} ===",
+        "log_ddg_start": "   -> [DDG] Suche auf DuckDuckGo...",
+        "log_ddg_err": "   -> [DDG FEHLER] {}",
+        "log_brave_start": "   -> [BRAVE] Ziel nicht erreicht. Verwende Brave Search API ({} fehlen)...",
+        "log_brave_missing": "   -> [WARNUNG] Brave API-Schlüssel fehlt! Brave-Phase wird übersprungen.",
+        "log_brave_0": "   -> [BRAVE] 0 Ergebnisse von API zurückgegeben.",
+        "log_brave_err": "   -> [BRAVE FEHLER] {}",
+        "log_unsupported": "   -> [WARNUNG] Nicht unterstütztes Format für Bereinigung: {}"
     }
 }
 
@@ -448,8 +498,7 @@ class DatasetBuilderApp(ctk.CTk):
         self.combo_max_files.set("20")
 
         # --- NUOVI CAMPI PER LE API DI BRAVE SEARCH ---
-        lbl_api_text = "Brave API Key:" if self.os_lang_code == 'en' else "Chiave API Brave:"
-        ctk.CTkLabel(self.frame_params, text=lbl_api_text).grid(row=6, column=0, padx=10, pady=(5, 10), sticky="w")
+        ctk.CTkLabel(self.frame_params, text=self.t["lbl_api_key"]).grid(row=6, column=0, padx=10, pady=(5, 10), sticky="w")
         self.entry_api_key = ctk.CTkEntry(self.frame_params, show="*") 
         self.entry_api_key.grid(row=6, column=1, padx=10, pady=(5, 10), sticky="ew")
 
@@ -704,7 +753,7 @@ class DatasetBuilderApp(ctk.CTk):
             for target_ext in ["pdf", "docx"]:
                 if self.stop_event.is_set() or downloaded_count >= max_files: break
                 
-                self.log_message(f"=== Searching for format: {target_ext.upper()} ===")
+                self.log_message(self.t["log_format"].format(target_ext.upper()))
 
                 strict_query = " ".join(inc_list) + f" filetype:{target_ext}" + exclusions_str + date_query_append
                 self.log_message(self.t["log_strict"].format(strict_query))
@@ -724,7 +773,7 @@ class DatasetBuilderApp(ctk.CTk):
 
     def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api):
         # --- PHASE 1: DUCKDUCKGO ---
-        self.log_message(f"   -> [DDG] Searching on DuckDuckGo...")
+        self.log_message(self.t["log_ddg_start"]) # TRADOTTO
         try:
             with DDGS() as ddgs:
                 ddg_results = list(ddgs.text(query, timelimit=time_param, region=region, max_results=max_files*2, backend="html"))
@@ -749,15 +798,15 @@ class DatasetBuilderApp(ctk.CTk):
                         self.stop_event.wait(sleep_time)
 
         except Exception as e:
-            self.log_message(f"   -> [DDG ERROR] {str(e)}")
+            self.log_message(self.t["log_ddg_err"].format(e)) # TRADOTTO
 
         # --- PHASE 2: BRAVE SEARCH API ---
         if current_count < max_files and not self.stop_event.is_set():
             missing_files = max_files - current_count
-            self.log_message(f"   -> [BRAVE] Target not reached. Using Brave Search API ({missing_files} missing)...")
+            self.log_message(self.t["log_brave_start"].format(missing_files)) # TRADOTTO
             
             if not brave_api:
-                self.log_message("   -> [WARNING] Brave API Key is missing! Skipping Brave phase.")
+                self.log_message(self.t["log_brave_missing"]) # TRADOTTO
             else:
                 try:
                     brave_results = []
@@ -788,7 +837,7 @@ class DatasetBuilderApp(ctk.CTk):
                         
                         if not items:
                             if offset == 0:
-                                self.log_message("   -> [BRAVE] 0 results returned by API.")
+                                self.log_message(self.t["log_brave_0"]) # TRADOTTO
                             break
                             
                         for item in items:
@@ -814,7 +863,7 @@ class DatasetBuilderApp(ctk.CTk):
                         self.stop_event.wait(sleep_time)
 
                 except Exception as e:
-                    self.log_message(f"   -> [BRAVE ERROR] {str(e)}")
+                    self.log_message(self.t["log_brave_err"].format(e)) # TRADOTTO
 
         # --- FINAL CHECK ---
         if current_count == 0:
@@ -925,7 +974,7 @@ class DatasetBuilderApp(ctk.CTk):
                         if self.stop_event.is_set(): break
                         full_text += para.text + "\n"
                 else:
-                    self.log_message(f"   -> [WARNING] Unsupported format for cleaning: {ext}")
+                    self.log_message(self.t["log_unsupported"].format(ext))
                     continue
 
                 if self.stop_event.is_set(): break
