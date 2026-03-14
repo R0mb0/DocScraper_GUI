@@ -6,7 +6,7 @@ import locale
 import threading
 import queue
 import time
-import random  # <--- AGGIUNTO QUESTO
+import random
 import re
 import urllib.parse
 import base64
@@ -18,8 +18,7 @@ import tempfile
 try:
     import customtkinter as ctk
     import requests
-    from duckduckgo_search import DDGS
-    from googlesearch import search # AGGIUNTA LIBRERIA GOOGLE
+    from ddgs import DDGS # <--- ABBIAMO CAMBIATO IL NOME QUI
     import fitz  # PyMuPDF
     import docx
 except ImportError as e:
@@ -27,7 +26,7 @@ except ImportError as e:
     print("MISSING DEPENDENCIES / DIPENDENZE MANCANTI!")
     print(f"Error: {e}")
     print("\nPlease install required packages using / Installa i pacchetti richiesti con:")
-    print("pip install customtkinter requests duckduckgo-search googlesearch-python PyMuPDF docx")
+    print("pip install customtkinter requests duckduckgo-search PyMuPDF python-docx")
     print("="*60)
     sys.exit(1)
 
@@ -444,6 +443,12 @@ class DatasetBuilderApp(ctk.CTk):
         self.combo_max_files.grid(row=5, column=1, padx=10, pady=(5, 10), sticky="ew")
         self.combo_max_files.set("20")
 
+        # --- NUOVI CAMPI PER LE API DI BRAVE SEARCH ---
+        lbl_api_text = "Brave API Key:" if self.os_lang_code == 'en' else "Chiave API Brave:"
+        ctk.CTkLabel(self.frame_params, text=lbl_api_text).grid(row=6, column=0, padx=10, pady=(5, 10), sticky="w")
+        self.entry_api_key = ctk.CTkEntry(self.frame_params, show="*") 
+        self.entry_api_key.grid(row=6, column=1, padx=10, pady=(5, 10), sticky="ew")
+
         # --- 2. OUTPUT DIR ---
         self.frame_dir = ctk.CTkFrame(self.main_frame, corner_radius=10)
         self.frame_dir.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
@@ -494,7 +499,8 @@ class DatasetBuilderApp(ctk.CTk):
             "age": self.combo_age.get(),
             "max_files": self.combo_max_files.get(),
             "output_dir": self.entry_out_dir.get(),
-            "clean_enabled": self.checkbox_clean.get()
+            "clean_enabled": self.checkbox_clean.get(),
+            "brave_api_key": self.entry_api_key.get() # SALVATAGGIO API BRAVE
         }
 
         try:
@@ -531,6 +537,10 @@ class DatasetBuilderApp(ctk.CTk):
             
             if settings.get("clean_enabled", 1) == 1: self.checkbox_clean.select()
             else: self.checkbox_clean.deselect()
+            
+            # CARICAMENTO API BRAVE
+            self.entry_api_key.delete(0, "end")
+            self.entry_api_key.insert(0, settings.get("brave_api_key", ""))
                 
             self.log_message(self.t["msg_loaded"].format(file_path))
         except Exception as e:
@@ -556,7 +566,8 @@ class DatasetBuilderApp(ctk.CTk):
     def toggle_ui_state(self, running: bool):
         state = "disabled" if running else "normal"
         for widget in [self.textbox_include, self.textbox_exclude, self.combo_lang, self.combo_age, 
-                       self.combo_max_files, self.entry_out_dir, self.btn_browse, self.checkbox_clean]:
+                       self.combo_max_files, self.entry_out_dir, self.btn_browse, self.checkbox_clean,
+                       self.entry_api_key]: # SOLO L'API KEY
             widget.configure(state=state)
         
         self.btn_start.configure(state="disabled" if running else "normal")
@@ -568,6 +579,7 @@ class DatasetBuilderApp(ctk.CTk):
     def start_process(self):
         include_kw = self.textbox_include.get("1.0", "end-1c").strip()
         out_dir = self.entry_out_dir.get().strip()
+        brave_api = self.entry_api_key.get().strip() # LEGGE L'API BRAVE
 
         if not include_kw:
             self.log_message(self.t["err_include_empty"])
@@ -604,7 +616,8 @@ class DatasetBuilderApp(ctk.CTk):
             self.consumer_thread = threading.Thread(target=self._cleaner_consumer_worker, args=(cleaned_dir,), daemon=True)
             self.consumer_thread.start()
 
-        self.producer_thread = threading.Thread(target=self._search_producer_worker, args=(out_dir, enable_cleaning, max_files), daemon=True)
+        # PASSIAMO L'API AL THREAD DEL PRODUTTORE
+        self.producer_thread = threading.Thread(target=self._search_producer_worker, args=(out_dir, enable_cleaning, max_files, brave_api), daemon=True)
         self.producer_thread.start()
 
         threading.Thread(target=self._monitor_threads, daemon=True).start()
@@ -631,7 +644,7 @@ class DatasetBuilderApp(ctk.CTk):
     # ==============================================================================
     # THREAD PRODUTTORE
     # ==============================================================================
-    def _search_producer_worker(self, output_dir, enable_cleaning, max_files):
+    def _search_producer_worker(self, output_dir, enable_cleaning, max_files, brave_api):
         include_raw = self.textbox_include.get("1.0", "end-1c").strip()
         exclude_raw = self.textbox_exclude.get("1.0", "end-1c").strip()
         
@@ -653,6 +666,9 @@ class DatasetBuilderApp(ctk.CTk):
                 exc_list.append(f'-"{clean_kw}"')
             else:
                 exc_list.append(f"-{clean_kw}")
+                
+        # --- BLOCCO ANTI-SPAZZATURA ---
+        exc_list.extend(['-site:zhihu.com', '-site:baidu.com', '-site:zhidao.baidu.com'])
         
         exclusions_str = " " + " ".join(exc_list) if exc_list else ""
 
@@ -679,7 +695,6 @@ class DatasetBuilderApp(ctk.CTk):
             region_name = ui_lang_val if region == selected_region else self.t["lang_en"]
             self.log_message(self.t["log_phase"].format(region_name, region))
 
-            # CICLO SUI FORMATI: Prima PDF, se non basta DOCX
             for target_ext in ["pdf", "docx"]:
                 if self.stop_event.is_set() or downloaded_count >= max_files: break
                 
@@ -687,25 +702,24 @@ class DatasetBuilderApp(ctk.CTk):
 
                 strict_query = " ".join(inc_list) + f" filetype:{target_ext}" + exclusions_str + date_query_append
                 self.log_message(self.t["log_strict"].format(strict_query))
-                downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext)
+                
+                downloaded_count = self._execute_search_phase(strict_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api)
 
                 if self.stop_event.is_set() or downloaded_count >= max_files: break
 
                 if len(inc_list) > 1:
                     loose_query = "(" + " OR ".join(inc_list) + f") filetype:{target_ext}" + exclusions_str + date_query_append
                     self.log_message(self.t["log_loose"].format(loose_query))
-                    downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext)
+                    downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api)
 
         if downloaded_count < max_files and not self.stop_event.is_set():
             self.log_message(self.t["log_summary"].format(downloaded_count, max_files))
 
-    def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning, target_ext):
+    def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api):
         # --- PHASE 1: DUCKDUCKGO ---
         self.log_message(f"   -> [DDG] Searching on DuckDuckGo...")
         try:
             with DDGS() as ddgs:
-                # MODIFICA CRITICA: backend="html" forza DDG a comportarsi come un VERO browser.
-                # Evita totalmente i link cinesi spazzatura e gestisce perfettamente le esclusioni (-).
                 ddg_results = list(ddgs.text(query, timelimit=time_param, region=region, max_results=max_files*2, backend="html"))
                 
                 if ddg_results:
@@ -724,47 +738,76 @@ class DatasetBuilderApp(ctk.CTk):
                             if enable_cleaning:
                                 self.download_queue.put(downloaded_path)
                                 
-                        # --- SICUREZZA ANTI-BAN DDG ---
                         sleep_time = random.uniform(3.0, 6.0)
                         self.stop_event.wait(sleep_time)
 
         except Exception as e:
             self.log_message(f"   -> [DDG ERROR] {str(e)}")
 
-        # --- PHASE 2: GOOGLE SEARCH (FALLBACK/INTEGRATION) ---
+        # --- PHASE 2: BRAVE SEARCH API ---
         if current_count < max_files and not self.stop_event.is_set():
             missing_files = max_files - current_count
-            self.log_message(f"   -> [GOOGLE] Target not reached. Searching on Google to fill the gap ({missing_files} missing files)...")
-            try:
-                # L'uso di advanced=True a volte estrae risultati in un formato che ignora il popup dei Cookie
-                google_results = list(search(query, num_results=max_files*2, sleep_interval=10, lang="en", advanced=True))
-                
-                if not google_results:
-                    self.log_message("   -> [WARNING] Google returned 0 results. (Probabile blocco della pagina Cookie Consent Europea)")
+            self.log_message(f"   -> [BRAVE] Target not reached. Using Brave Search API ({missing_files} missing)...")
+            
+            if not brave_api:
+                self.log_message("   -> [WARNING] Brave API Key is missing! Skipping Brave phase.")
+            else:
+                try:
+                    brave_results = []
+                    # Brave permette fino a 20 risultati per pagina.
+                    for offset in [0, 1]:
+                        if self.stop_event.is_set() or current_count >= max_files: break
+                        
+                        url = "https://api.search.brave.com/res/v1/web/search"
+                        headers = {
+                            "Accept": "application/json",
+                            "Accept-Encoding": "gzip",
+                            "X-Subscription-Token": brave_api
+                        }
+                        params = {
+                            "q": query,
+                            "count": 20,
+                            "offset": offset
+                        }
+                        
+                        response = requests.get(url, headers=headers, params=params, timeout=15)
+                        
+                        if response.status_code != 200:
+                            self.log_message(f"   -> [BRAVE API ERROR] Code {response.status_code}")
+                            break
+                            
+                        data = response.json()
+                        items = data.get("web", {}).get("results", [])
+                        
+                        if not items:
+                            if offset == 0:
+                                self.log_message("   -> [BRAVE] 0 results returned by API.")
+                            break
+                            
+                        for item in items:
+                            brave_results.append(item.get("url"))
+                            
+                        self.stop_event.wait(1.5) # Limite rateo API Brave gratuito (1 al sec)
 
-                for result in google_results:
-                    if self.stop_event.is_set() or current_count >= max_files: break
-                    
-                    # Con advanced=True, result è un oggetto strutturato. Ne estraiamo l'URL.
-                    url = getattr(result, 'url', result) if hasattr(result, 'url') else result
-                    
-                    if not isinstance(url, str) or not url or url in seen_urls: continue
+                    # Elaboriamo i risultati estratti
+                    for url in brave_results:
+                        if self.stop_event.is_set() or current_count >= max_files: break
+                        if not url or url in seen_urls: continue
 
-                    seen_urls.add(url)
-                    self.log_message(self.t["log_found_url"].format(url))
-                    
-                    downloaded_path = self._download_file(url, output_dir, current_count, target_ext)
-                    if downloaded_path:
-                        current_count += 1
-                        if enable_cleaning:
-                            self.download_queue.put(downloaded_path)
+                        seen_urls.add(url)
+                        self.log_message(self.t["log_found_url"].format(url))
+                        
+                        downloaded_path = self._download_file(url, output_dir, current_count, target_ext)
+                        if downloaded_path:
+                            current_count += 1
+                            if enable_cleaning:
+                                self.download_queue.put(downloaded_path)
 
-                    # --- SICUREZZA ANTI-BAN SERVER FINALI ---
-                    sleep_time = random.uniform(4.0, 8.0)
-                    self.stop_event.wait(sleep_time)
+                        sleep_time = random.uniform(3.0, 6.0)
+                        self.stop_event.wait(sleep_time)
 
-            except Exception as e:
-                self.log_message(f"   -> [GOOGLE ERROR] {str(e)}")
+                except Exception as e:
+                    self.log_message(f"   -> [BRAVE ERROR] {str(e)}")
 
         # --- FINAL CHECK ---
         if current_count == 0:
@@ -801,7 +844,7 @@ class DatasetBuilderApp(ctk.CTk):
             # 4. Fallback se ancora non assomiglia all'estensione cercata
             if not filename.lower().endswith(f'.{target_ext}'):
                 if filename:
-                    filename = f"{filename}.{target_ext}" # es. 1234 -> 1234.docx
+                    filename = f"{filename}.{target_ext}" 
                 else:
                     filename = f"dataset_doc_{current_count + 1}.{target_ext}"
             
