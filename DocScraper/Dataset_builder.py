@@ -422,11 +422,15 @@ class DatasetBuilderApp(ctk.CTk):
         self.textbox_include = ctk.CTkTextbox(self.frame_params, height=80)
         self.textbox_include.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
         self.textbox_include._textbox.configure(undo=True, autoseparators=True, maxundo=-1)
+        self.textbox_include.bind("<Control-z>", lambda e: self.textbox_include._textbox.event_generate("<<Undo>>"))
+        self.textbox_include.bind("<Control-y>", lambda e: self.textbox_include._textbox.event_generate("<<Redo>>"))
 
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_exclude"], justify="left").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
         self.textbox_exclude = ctk.CTkTextbox(self.frame_params, height=80)
         self.textbox_exclude.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
         self.textbox_exclude._textbox.configure(undo=True, autoseparators=True, maxundo=-1)
+        self.textbox_exclude.bind("<Control-z>", lambda e: self.textbox_exclude._textbox.event_generate("<<Undo>>"))
+        self.textbox_exclude.bind("<Control-y>", lambda e: self.textbox_exclude._textbox.event_generate("<<Redo>>"))
 
         ctk.CTkLabel(self.frame_params, text=self.t["lbl_lang"]).grid(row=3, column=0, padx=10, pady=5, sticky="w")
         self.combo_lang = ctk.CTkComboBox(self.frame_params, values=list(self.lang_options_map.keys()))
@@ -556,12 +560,14 @@ class DatasetBuilderApp(ctk.CTk):
             self.entry_out_dir.insert(0, directory)
 
     def log_message(self, message):
-        def update_log():
+        def update_ui():
             self.textbox_log.configure(state="normal")
-            self.textbox_log.insert(ctk.END, message + "\n")
-            self.textbox_log.see(ctk.END) 
+            self.textbox_log.insert("end", message + "\n")
+            self.textbox_log.see("end")
             self.textbox_log.configure(state="disabled")
-        self.after(0, update_log)
+        
+        # Mette in coda l'aggiornamento grafico sul thread principale (sicuro al 100%)
+        self.after(0, update_ui)
 
     def toggle_ui_state(self, running: bool):
         state = "disabled" if running else "normal"
@@ -712,7 +718,8 @@ class DatasetBuilderApp(ctk.CTk):
                     self.log_message(self.t["log_loose"].format(loose_query))
                     downloaded_count = self._execute_search_phase(loose_query, time_param, region, max_files, downloaded_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api)
 
-        if downloaded_count < max_files and not self.stop_event.is_set():
+        # Rimosso il limite: ora stampa sempre il riassunto finale!
+        if not self.stop_event.is_set():
             self.log_message(self.t["log_summary"].format(downloaded_count, max_files))
 
     def _execute_search_phase(self, query, time_param, region, max_files, current_count, seen_urls, output_dir, enable_cleaning, target_ext, brave_api):
@@ -817,7 +824,14 @@ class DatasetBuilderApp(ctk.CTk):
 
     def _download_file(self, url, output_dir, current_count, target_ext):
         """Scarica il file verificando che non sia una pagina web mascherata e estraendo il vero nome."""
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        # Header arricchiti per ingannare i server e sembrare un vero browser umano
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'application/pdf,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://www.google.com/',
+            'Connection': 'keep-alive'
+        }
         try:
             response = requests.get(url, headers=headers, stream=True, timeout=15)
             response.raise_for_status()
