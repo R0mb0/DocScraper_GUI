@@ -18,7 +18,7 @@ import tempfile
 try:
     import customtkinter as ctk
     import requests
-    from ddgs import DDGS # <--- ABBIAMO CAMBIATO IL NOME QUI
+    from ddgs import DDGS 
     import fitz  # PyMuPDF
     import docx
 except ImportError as e:
@@ -40,7 +40,7 @@ except ImportError as e:
 # ==============================================================================
 TRANSLATIONS = {
     "en": {
-        "app_title": "AI Dataset Builder Pro",
+        "app_title": "DocScraper",
         "menu_file": "File",
         "menu_import": "Import Settings...",
         "menu_export": "Export Settings...",
@@ -111,7 +111,7 @@ TRANSLATIONS = {
         "log_unsupported": "   -> [WARNING] Unsupported format for cleaning: {}"
     },
     "it": {
-        "app_title": "Costruttore Dataset AI Pro",
+        "app_title": "DocScraper",
         "menu_file": "File",
         "menu_import": "Importa Impostazioni...",
         "menu_export": "Esporta Impostazioni...",
@@ -179,7 +179,7 @@ TRANSLATIONS = {
         "log_unsupported": "   -> [ATTENZIONE] Formato non supportato per la pulizia: {}"
     },
     "es": {
-        "app_title": "Constructor de Datasets IA Pro",
+        "app_title": "DocScraper",
         "menu_file": "Archivo",
         "menu_import": "Importar Configuraciones...",
         "menu_export": "Exportar Configuraciones...",
@@ -247,7 +247,7 @@ TRANSLATIONS = {
         "log_unsupported": "   -> [ADVERTENCIA] Formato no soportado para limpieza: {}"
     },
     "fr": {
-        "app_title": "Créateur de Datasets IA Pro",
+        "app_title": "DocScraper",
         "menu_file": "Fichier",
         "menu_import": "Importer Paramètres...",
         "menu_export": "Exporter Paramètres...",
@@ -315,7 +315,7 @@ TRANSLATIONS = {
         "log_unsupported": "   -> [ATTENTION] Format non pris en charge pour le nettoyage : {}"
     },
     "de": {
-        "app_title": "KI Dataset Builder Pro",
+        "app_title": "DocScraper",
         "menu_file": "Datei",
         "menu_import": "Einstellungen importieren...",
         "menu_export": "Einstellungen exportieren...",
