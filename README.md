@@ -14,7 +14,7 @@ An automated, anti-bot document scraper and dataset generator built with Python 
 
 </div>
 
- <!--  -->
+ ![demo.png](https://github.com/R0mb0/DocScraper_GUI/blob/main/Readme_imgs/demo.png)
 
 <hr>
 
