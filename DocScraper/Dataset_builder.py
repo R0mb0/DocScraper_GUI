@@ -33,7 +33,7 @@ except ImportError as e:
 # ==============================================================================
 # ICONA SEGNAPOSTO (Base64)
 # ==============================================================================
-ICON_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAAJUlEQVQ4T2NkoBAwUqifYdQAxqEwajoYRg1gHAqjpoNh+AAzEwMAJ6YBzXUuIycAAAAASUVORK5CYII='
+#ICON_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAAJUlEQVQ4T2NkoBAwUqifYdQAxqEwajoYRg1gHAqjpoNh+AAzEwMAJ6YBzXUuIycAAAAASUVORK5CYII='
 
 # ==============================================================================
 # DIZIONARIO TRADUZIONI (i18n)
@@ -442,13 +442,18 @@ class DatasetBuilderApp(ctk.CTk):
 
     def _set_app_icon(self):
         try:
-            icon_data = base64.b64decode(ICON_BASE64)
-            temp_icon_path = os.path.join(tempfile.gettempdir(), "placeholder_icon.ico")
-            with open(temp_icon_path, "wb") as f:
-                f.write(icon_data)
-            self.iconbitmap(temp_icon_path)
-        except Exception:
-            pass 
+            #icon_data = base64.b64decode(ICON_BASE64)
+            #icon_data = base64.b64decode(ICON_BASE64)
+            # Ottiene il percorso assoluto della cartella dello script
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            # Sostituisci "mia_icona.ico" con il nome esatto del tuo file
+            icon_path = os.path.join(base_dir, "Icon.ico")
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+            else:
+                print(f"[WARNING] File icon not finded in: {icon_path}")
+        except Exception as e:
+            print(f"[ERROR] Impossibile to load the icon: {e}")
 
     def _build_menu(self):
         menubar = tk.Menu(self)
