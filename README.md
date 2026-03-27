@@ -5,7 +5,12 @@
 An automated, anti-bot document scraper and dataset generator built with Python and CustomTkinter. It bypasses search engine rate limits and strict academic servers to bulk-download PDFs, DOCXs, and text files, instantly extracting and cleaning their text for AI/LLM training.
 </p>
 
-
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3eb0017b740249d18ca360e283eade8e)](https://app.codacy.com/gh/R0mb0/DocScraper_GUI/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/R0mb0/DocScraper_GUI)
+[![Open Source Love svg3](https://badges.frapsoft.com/os/v3/open-source.svg?v=103)](https://github.com/R0mb0/DocScraper_GUI)
+[![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit)
+[![Donate](https://img.shields.io/badge/PayPal-Donate%20to%20Author-blue.svg)](http://paypal.me/R0mb0)
 
 </div>
 
@@ -80,6 +85,6 @@ An automated, anti-bot document scraper and dataset generator built with Python 
 <picture>
 <source media="(prefers-color-scheme: dark)" srcset="https://github.com/R0mb0/Crafted_with_AI/blob/main/Badge/SVG/CraftedWithAIDark.svg">
 <source media="(prefers-color-scheme: light)" srcset="https://github.com/R0mb0/Crafted_with_AI/blob/main/Badge/SVG/NotMadeByAILight.svg">
-<img alt="Crafted with AI" src="https://www.google.com/search?q=https://github.com/R0mb0/Crafted_with_AI/blob/main/Badge/SVG/CraftedWithAIDefault.svg"> <!-- Sostituito con CraftedWithAI visto il contesto -->
+<img alt="Crafted with AI" src="https://www.google.com/search?q=https://github.com/R0mb0/Crafted_with_AI/blob/main/Badge/SVG/CraftedWithAIDefault.svg">
 </picture>
 </a>
