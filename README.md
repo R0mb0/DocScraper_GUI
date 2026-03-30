@@ -76,7 +76,7 @@ An automated, anti-bot document scraper and dataset generator built with Python 
 <pre><code>pip install customtkinter requests beautifulsoup4 PyMuPDF python-docx</code></pre>
 </li>
 <li><strong>Run the application</strong>:
-<pre><code>python Dataset_builder.py</code></pre>
+<pre><code>python DocScraper.py</code></pre>
 </li>
 <li>Set your parameters, choose a destination folder, and click <strong>START SEARCH</strong>!</li>
 </ol>
