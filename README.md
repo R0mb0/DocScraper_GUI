@@ -1,5 +1,5 @@
 <div align="center">
-<h1>🕵️‍♂️ DocScraper GUI - Stealth Mode 📦</h1>
+<h1>🕵️‍♂️ DocScraper GUI 📦</h1>
 
 <p>
 An automated, anti-bot document scraper and dataset generator built with Python and CustomTkinter. It bypasses search engine rate limits and strict academic servers to bulk-download PDFs, DOCXs, and text files, instantly extracting and cleaning their text for AI/LLM training.
