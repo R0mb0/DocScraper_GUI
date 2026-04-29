@@ -5,6 +5,18 @@
 An automated, anti-bot document scraper and dataset generator built with Python and CustomTkinter. It bypasses search engine rate limits and strict academic servers to bulk-download PDFs, DOCXs, and text files, instantly extracting and cleaning their text for AI/LLM training.
 </p>
 
+<div align="center">
+  <a href="http://paypal.me/R0mb0">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/R0mb0/Support_the_dev_badge/blob/main/Badge/SVG/Support_the_dev_badge_Dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://github.com/R0mb0/Support_the_dev_badge/blob/main/Badge/SVG/Support_the_dev_badge_Light.svg">
+      <img alt="Saved you time? Support the dev" src="https://github.com/R0mb0/Support_the_dev_badge/blob/main/Badge/SVG/Support_the_dev_badge_Default.svg">
+    </picture>
+  </a>
+</div>
+
+---
+
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3eb0017b740249d18ca360e283eade8e)](https://app.codacy.com/gh/R0mb0/DocScraper_GUI/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/R0mb0/DocScraper_GUI)
